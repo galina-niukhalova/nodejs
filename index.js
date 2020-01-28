@@ -1,6 +1,8 @@
 const fs = require('fs');
 const http = require('http');
 const url = require('url');
+// const slugify = require('slugify');
+const replaceTemplate = require('./modules/replaceTemplate');
 
 const tempOverview = fs.readFileSync(`${__dirname}/templates/template-overview.html`, 'utf-8');
 const tempCard = fs.readFileSync(`${__dirname}/templates/template-card.html`, 'utf-8');
@@ -8,26 +10,7 @@ const tempProduct = fs.readFileSync(`${__dirname}/templates/template-product.htm
 
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObj = JSON.parse(data);
-
-function replaceTemplate(temp, {
-  image, productName, quantity, price, from, nutrients, description, organic, id,
-}) {
-  const output = temp
-    .replace(/{%IMAGE%}/g, image)
-    .replace(/{%PRODUCT_NAME%}/g, productName)
-    .replace(/{%QUANTITY%}/g, quantity)
-    .replace(/{%PRICE%}/g, price)
-    .replace(/{%FROM%}/g, from)
-    .replace(/{%NUTRIENCE%}/g, nutrients)
-    .replace(/{%DESCRIPTION%}/g, description)
-    .replace(/{%ID%}/g, id);
-
-  if (!organic) {
-    output.replace(/NOT_ORGANIC/, 'not-organic');
-  }
-
-  return output;
-}
+// const slugs = dataObj.map(({ productName }) => slugify(productName, { lower: true }));
 
 const cardsHTML = dataObj.map((product) => replaceTemplate(tempCard, product));
 const overviewHTML = tempOverview.replace('{%PRODUCT_CARDS%}', cardsHTML);
