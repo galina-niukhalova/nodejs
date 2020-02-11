@@ -3,6 +3,36 @@ const fs = require('fs');
 const TOURS_FILE = 'natours/dev-data/data/tours-simple.json';
 const tours = JSON.parse(fs.readFileSync(TOURS_FILE));
 
+exports.checkID = (req, resp, next) => {
+  const tour = tours.find((el) => el.id === Number(req.params.id));
+
+  if (!tour) {
+    return resp
+      .status(404)
+      .json({
+        status: 'Error',
+        data: null,
+      });
+  }
+
+  return next();
+};
+
+exports.checkBody = (req, resp, next) => {
+  const { name, price } = req.body;
+
+  if (!name || !price) {
+    resp
+      .status(404)
+      .json({
+        status: 'Error',
+        message: 'Name and pricing fields are required',
+      });
+  }
+
+  next();
+};
+
 exports.getAllTours = (req, resp) => {
   resp
     .status(200)
@@ -17,16 +47,6 @@ exports.getAllTours = (req, resp) => {
 
 exports.getTour = (req, resp) => {
   const tour = tours.find((el) => el.id === Number(req.params.id));
-  console.log(tours, req.params.id);
-
-  if (!tour) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        data: null,
-      });
-  }
 
   resp
     .status(200)
