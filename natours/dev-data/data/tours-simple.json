@@ -182,58 +182,5 @@
             "2022-01-16,10:00",
             "2022-12-12,10:00"
         ]
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 10
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 11
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 11
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 12
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "id": 13
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 14
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 15
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 16
-    },
-    {
-        "name": "Singapoer safari",
-        "duration": 1,
-        "price": 100,
-        "id": 17
     }
 ]
