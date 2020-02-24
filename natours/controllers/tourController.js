@@ -15,8 +15,82 @@ exports.checkBody = (req, resp, next) => {
   next();
 };
 
+/**
+ * tours?duration[gte]=5&difficulty=easy
+ * gte - operator
+ */
+function filtering(initialQuery) {
+  let queryObj = Object.assign(initialQuery);
+  let queryStr = JSON.stringify(queryObj);
+  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+  queryObj = JSON.parse(queryStr);
+
+  const excludedFields = ['page', 'sort', 'limit', 'fields'];
+  excludedFields.forEach((excludedField) => delete queryObj[excludedField]);
+
+  return Tour.find(queryObj);
+}
+
+/**
+ * tours?sort=-price - revert order
+ * sort('price ratingsAverage')
+ *  - second arg will apply if 2 items have the same result by price filtering
+ */
+function sorting(initialQuery, query) {
+  let sortBy = '-createdAt';
+  if (initialQuery.sort) {
+    sortBy = initialQuery.sort.split(',').join(' ');
+  }
+  return query.sort(sortBy);
+}
+
+function limiting(initialQuery, query) {
+  let limitBy;
+  if (initialQuery.fields) {
+    limitBy = initialQuery.fields.split(',').join(' ');
+  } else {
+    limitBy = '-__v ';
+  }
+  return query.select(limitBy);
+}
+
+async function pagination(initialQuery, query) {
+  try {
+    let newLimit = query;
+    let skipNumber;
+    const limit = Number(initialQuery.limit) || 10;
+
+    if (initialQuery.page) {
+      skipNumber = (initialQuery.page - 1) * limit;
+      const numTours = await Tour.countDocuments();
+      if (skipNumber >= numTours) throw new Error('Page does not exist');
+
+      newLimit = query.skip(skipNumber).limit(limit);
+    } else if (initialQuery.limit) {
+      newLimit = query.limit(limit);
+    }
+
+    return {
+      query: newLimit,
+    };
+  } catch ({ errmsg }) {
+    return { error: errmsg };
+  }
+}
+
 exports.getAllTours = async (req, resp) => {
-  const tours = await Tour.find();
+  let query = filtering(req.query);
+  query = sorting(req.query, query);
+  query = limiting(req.query, query);
+  const paginationQuery = pagination(req.query, query);
+  if (paginationQuery.error) {
+    throw paginationQuery.error;
+  } else {
+    query = paginationQuery.query;
+  }
+
+
+  const tours = await query;
 
   try {
     resp
