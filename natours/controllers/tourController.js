@@ -56,7 +56,7 @@ function limiting(initialQuery, query) {
 
 async function pagination(initialQuery, query) {
   try {
-    let newLimit = query;
+    let newQuery = query;
     let skipNumber;
     const limit = Number(initialQuery.limit) || 10;
 
@@ -65,16 +65,14 @@ async function pagination(initialQuery, query) {
       const numTours = await Tour.countDocuments();
       if (skipNumber >= numTours) throw new Error('Page does not exist');
 
-      newLimit = query.skip(skipNumber).limit(limit);
+      newQuery = query.skip(skipNumber).limit(limit);
     } else if (initialQuery.limit) {
-      newLimit = query.limit(limit);
+      newQuery = query.limit(limit);
     }
 
-    return {
-      query: newLimit,
-    };
-  } catch ({ errmsg }) {
-    return { error: errmsg };
+    return newQuery;
+  } catch ({ message }) {
+    throw new Error(message);
   }
 }
 
@@ -82,17 +80,13 @@ exports.getAllTours = async (req, resp) => {
   let query = filtering(req.query);
   query = sorting(req.query, query);
   query = limiting(req.query, query);
-  const paginationQuery = pagination(req.query, query);
-  if (paginationQuery.error) {
-    throw paginationQuery.error;
-  } else {
-    query = paginationQuery.query;
-  }
 
-
-  const tours = await query;
 
   try {
+    query = pagination(req.query, query);
+
+    const tours = await query;
+
     resp
       .status(200)
       .json({
@@ -102,12 +96,12 @@ exports.getAllTours = async (req, resp) => {
           tours,
         },
       });
-  } catch ({ errmsg }) {
+  } catch ({ message }) {
     resp
       .status(404)
       .json({
         status: 'error',
-        message: errmsg,
+        message,
       });
   }
 };
