@@ -23,21 +23,30 @@ exports.checkBody = (req, resp, next) => {
   next();
 };
 
-/**
- * tours?duration[gte]=5&difficulty=easy
- * gte - operator
- */
-function filtering(initialQuery) {
-  let queryObj = Object.assign(initialQuery);
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-  queryObj = JSON.parse(queryStr);
 
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach((excludedField) => delete queryObj[excludedField]);
+class APIFeatures {
+  constructor(query, queryString) {
+    this.query = query;
+    this.queryString = queryString;
+  }
 
-  return Tour.find(queryObj);
+  /**
+  * tours?duration[gte]=5&difficulty=easy
+  * gte - operator
+  */
+  filter() {
+    let queryObj = Object.assign(this.query);
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    queryObj = JSON.parse(queryStr);
+
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach((excludedField) => delete queryObj[excludedField]);
+
+    this.query.find(queryObj);
+  }
 }
+
 
 /**
  * tours?sort=-price - revert order
@@ -85,8 +94,9 @@ async function pagination(initialQuery, query) {
 }
 
 exports.getAllTours = async (req, resp) => {
-  let query = filtering(req.query);
-  query = sorting(req.query, query);
+  const features = APIFeatures(Tour.find(), req.query).filter();
+
+  let query = sorting(req.query, features.query);
   query = limiting(req.query, query);
 
 
