@@ -1,0 +1,14 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 2017,
+        "sourceType": "module",
+        "ecmaFeatures": {
+          "jsx": true
+        },
+        "allowImportExportEverywhere": true
+    },
+    "rules": {
+        "semi": "error"
+    },
+    "extends": "airbnb"
+}
