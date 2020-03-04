@@ -1,4 +1,5 @@
 const Tour = require('./../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
 
 exports.aliasTopTours = (req, resp, next) => {
   req.query.limit = 5;
@@ -12,115 +13,37 @@ exports.checkBody = (req, resp, next) => {
   const { name, price } = req.body;
 
   if (!name || !price) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        message: 'Name and pricing fields are required',
-      });
+    resp.status(404).json({
+      status: 'Error',
+      message: 'Name and pricing fields are required',
+    });
   }
 
   next();
 };
 
-
-class APIFeatures {
-  constructor(query, queryString) {
-    this.query = query;
-    this.queryString = queryString;
-  }
-
-  /**
-  * tours?duration[gte]=5&difficulty=easy
-  * gte - operator
-  */
-  filter() {
-    let queryObj = Object.assign(this.query);
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    queryObj = JSON.parse(queryStr);
-
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((excludedField) => delete queryObj[excludedField]);
-
-    this.query.find(queryObj);
-  }
-}
-
-
-/**
- * tours?sort=-price - revert order
- * sort('price ratingsAverage')
- *  - second arg will apply if 2 items have the same result by price filtering
- */
-function sorting(initialQuery, query) {
-  let sortBy = '-createdAt';
-  if (initialQuery.sort) {
-    sortBy = initialQuery.sort.split(',').join(' ');
-  }
-  return query.sort(sortBy);
-}
-
-function limiting(initialQuery, query) {
-  let limitBy;
-  if (initialQuery.fields) {
-    limitBy = initialQuery.fields.split(',').join(' ');
-  } else {
-    limitBy = '-__v ';
-  }
-  return query.select(limitBy);
-}
-
-async function pagination(initialQuery, query) {
-  try {
-    let newQuery = query;
-    let skipNumber;
-    const limit = Number(initialQuery.limit) || 10;
-
-    if (initialQuery.page) {
-      skipNumber = (initialQuery.page - 1) * limit;
-      const numTours = await Tour.countDocuments();
-      if (skipNumber >= numTours) throw new Error('Page does not exist');
-
-      newQuery = query.skip(skipNumber).limit(limit);
-    } else if (initialQuery.limit) {
-      newQuery = query.limit(limit);
-    }
-
-    return newQuery;
-  } catch ({ message }) {
-    throw new Error(message);
-  }
-}
-
 exports.getAllTours = async (req, resp) => {
-  const features = APIFeatures(Tour.find(), req.query).filter();
-
-  let query = sorting(req.query, features.query);
-  query = limiting(req.query, query);
-
-
   try {
-    query = pagination(req.query, query);
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sorting()
+      .limiting()
+      .pagination();
 
-    const tours = await query;
+    const tours = await features.query;
 
-    resp
-      .status(200)
-      .json({
-        status: 'success',
-        results: tours.length,
-        data: {
-          tours,
-        },
-      });
+    resp.status(200).json({
+      status: 'success',
+      results: tours.length,
+      data: {
+        tours,
+      },
+    });
   } catch ({ message }) {
-    resp
-      .status(404)
-      .json({
-        status: 'error',
-        message,
-      });
+    resp.status(404).json({
+      status: 'error',
+      message,
+    });
   }
 };
 
@@ -128,21 +51,17 @@ exports.getTour = async (req, resp) => {
   try {
     const tour = await Tour.findById(req.params.id);
 
-    resp
-      .status(200)
-      .json({
-        status: 'Success',
-        data: {
-          tour,
-        },
-      });
+    resp.status(200).json({
+      status: 'Success',
+      data: {
+        tour,
+      },
+    });
   } catch ({ errmsg }) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        message: errmsg,
-      });
+    resp.status(404).json({
+      status: 'Error',
+      message: errmsg,
+    });
   }
 };
 
@@ -152,21 +71,17 @@ exports.updateTour = async (req, resp) => {
       new: true,
     });
 
-    resp
-      .status(200)
-      .json({
-        status: 'Success',
-        data: {
-          tour,
-        },
-      });
+    resp.status(200).json({
+      status: 'Success',
+      data: {
+        tour,
+      },
+    });
   } catch ({ errmsg }) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        message: errmsg,
-      });
+    resp.status(404).json({
+      status: 'Error',
+      message: errmsg,
+    });
   }
 };
 
@@ -174,21 +89,17 @@ exports.createTour = async (req, resp) => {
   try {
     const tour = await Tour.create(req.body);
 
-    resp
-      .status(200)
-      .json({
-        status: 'Success',
-        data: {
-          tour,
-        },
-      });
+    resp.status(200).json({
+      status: 'Success',
+      data: {
+        tour,
+      },
+    });
   } catch ({ errmsg }) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        message: errmsg,
-      });
+    resp.status(404).json({
+      status: 'Error',
+      message: errmsg,
+    });
   }
 };
 
@@ -196,18 +107,14 @@ exports.deleteTour = async (req, resp) => {
   try {
     await Tour.findByIdAndDelete(req.params.id);
 
-    resp
-      .status(204)
-      .json({
-        status: 'Success',
-        data: null,
-      });
+    resp.status(204).json({
+      status: 'Success',
+      data: null,
+    });
   } catch ({ errmsg }) {
-    resp
-      .status(404)
-      .json({
-        status: 'Error',
-        message: errmsg,
-      });
+    resp.status(404).json({
+      status: 'Error',
+      message: errmsg,
+    });
   }
 };
