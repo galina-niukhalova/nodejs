@@ -3,12 +3,16 @@
         "ecmaVersion": 2017,
         "sourceType": "module",
         "ecmaFeatures": {
-          "jsx": true
+            "jsx": true
         },
         "allowImportExportEverywhere": true
     },
     "rules": {
-        "semi": "error"
+        "semi": "error",
+        "func-names": [
+            "error",
+            "never"
+        ]
     },
     "extends": "airbnb"
 }
