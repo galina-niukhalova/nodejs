@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const validator = require('validator');
+
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -7,6 +9,9 @@ const tourSchema = new mongoose.Schema({
     required: [true, 'A tour must have a name'], // validator (the second param is an error message)
     unique: true,
     strim: true,
+    maxlength: [40, 'A tour name must have less or equal 40 characters'],
+    minlength: [10, 'A tour name must have more or equal 10 characters'],
+    // validate: [validator.isAlpha, 'Tour name must only contain characters'],
   },
   slug: String,
   rating: {
@@ -24,10 +29,16 @@ const tourSchema = new mongoose.Schema({
   difficulty: {
     type: String,
     required: [true, 'A tour should have a difficulty'],
+    enum: {
+      values: ['easy', 'medium', 'difficult'],
+      message: 'Difficulty is either easy, medium or difficult',
+    },
   },
   ratingsAverage: {
     type: Number,
     default: 4.5,
+    min: [1, 'A rating must be above 1.0'],
+    max: [5, 'A rating must be below 5.0'],
   },
   ratingsQuantity: {
     type: Number,
@@ -37,7 +48,14 @@ const tourSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'A tour must have a price'],
   },
-  priceDiscount: Number,
+  // price must be less than the price
+  priceDiscount: {
+    type: Number,
+    // custom validator
+    validate(value) {
+      return value < this.price;
+    },
+  },
   summary: {
     type: String,
     // remove all white space in the beginning and end of the string
@@ -121,6 +139,13 @@ tourSchema.pre(/^find/, function (next) { // -> for all quires which start from 
 tourSchema.post(/^find/, function (documents, next) {
   console.log(`Query took ${Date.now() - this.start} milliseconds`);
   // console.log(documents);
+  next();
+});
+
+/** Aggregation middleware */
+/** This - aggregate */
+tourSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
   next();
 });
 
