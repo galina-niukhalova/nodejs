@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto'); // build in package
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
@@ -16,6 +17,11 @@ const userSchema = new mongoose.Schema({
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ['user', 'admin', 'guide', 'lead-guide'],
+    default: 'user',
+  },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
@@ -36,6 +42,13 @@ const userSchema = new mongoose.Schema({
     }, 'Password confirm and password must match'],
   },
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 /**
@@ -56,6 +69,26 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) {
+    return next();
+  }
+
+  this.passwordChangedAt = Date.now() - 1000;
+  return next();
+});
+
+
+/**
+ * All find queries middleware
+ * We can modify query in this middleware, before it's executed
+ */
+userSchema.pre(/^find/, function (next) {
+  // this points to the current query
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 
 // instance method - will be available on all documents of the certain collection
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
@@ -72,6 +105,14 @@ userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
   }
 
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // valid for 10 min
+
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);
