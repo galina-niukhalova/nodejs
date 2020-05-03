@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 // const validator = require('validator');
-
+// const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema({
   name: {
@@ -83,10 +83,50 @@ const tourSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  startLocation: {
+    // GeoJSON
+    type: {
+      type: String,
+      default: 'Point',
+      enum: ['Point'],
+    },
+    // Latitude - horizontal position, equator - 0 degrees, in Arctic - 90 deg
+    // Longitude - vertical position, from meridian
+    coordinates: [Number], // array of numbers [Longitude, Latitude],
+    address: String,
+    description: String,
+  },
+  // Mongo db will create a Document, when we specify an array of objects
+  locations: [
+    {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+      day: Number,
+    },
+  ],
+  // guides: Array, // array of user ids for embedding
+  guides: [
+    {
+      type: mongoose.Schema.ObjectId, // as a reference to user
+      ref: 'User',
+    },
+  ],
+
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 });
+
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 }); // Compound index
+tourSchema.index({ startLocation: '2dsphere' });
+tourSchema.index({ slug: 1 });
 
 /** DOCUMENT middleware */
 /** Before the document will be saved to the db */
@@ -104,6 +144,23 @@ tourSchema.pre('save', (next) => {
   next();
 });
 
+// **********************************************************
+// convert guides ids to actual user documents
+// Embedding
+// Disadvantages of embedding: each time when user is updated, we will need to update tour as well
+// For ex. if user role was changed
+// Because of this, it's better to use user reference instead
+// **********************************************************
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => {
+//     const user = await User.findById(id);
+//     return user;
+//   });
+//   this.guides = await Promise.all(guidesPromises);
+
+//   next();
+// });
+
 
 /** Runs after all pre middleware functions have completed */
 /** post save hook */
@@ -119,6 +176,15 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// Virtual populate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  // this is the name of field in another model (Review model),
+  // where the ref to the current model is stored
+  foreignField: 'tour',
+  // the name of field, where is foreignField id is stored in the current model
+  localField: '_id',
+});
 
 /** QUERY MIDDLEWARE */
 /** Runs before or after the certain query is executed */
@@ -131,6 +197,15 @@ tourSchema.pre(/^find/, function (next) { // -> for all quires which start from 
 
   /** Time before query is executed */
   this.start = Date.now();
+
+  next();
+});
+
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt', // don't select __v and passwordChangedAt fields
+  });
 
   next();
 });

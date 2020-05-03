@@ -1,7 +1,7 @@
+const factory = require('./handlerFactory');
 const Tour = require('./../models/tourModel');
-const APIFeatures = require('../utils/apiFeatures');
-const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 
 exports.aliasTopTours = (req, resp, next) => {
   req.query.limit = 5;
@@ -24,91 +24,11 @@ exports.checkBody = (req, resp, next) => {
   next();
 };
 
-exports.getAllTours = catchAsync(async (req, resp) => {
-  const features = new APIFeatures(Tour.find(), req.query)
-    .filter()
-    .sorting()
-    .limiting()
-    .pagination();
-
-  const tours = await features.query;
-
-  resp.status(200).json({
-    status: 'success',
-    results: tours.length,
-    data: {
-      tours,
-    },
-  });
-});
-
-exports.getTour = catchAsync(async (req, resp, next) => {
-  const tour = await Tour.findById(req.params.id);
-
-  if (!tour) {
-    // eslint-disable-next-line no-new
-    return next(new AppError(`No tour found with the id ${req.params.id}`, 404));
-  }
-
-  resp.status(200).json({
-    status: 'Success',
-    data: {
-      tour,
-    },
-  });
-
-  return null;
-});
-
-exports.updateTour = catchAsync(async (req, resp, next) => {
-  const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    /** will check model validation */
-    runValidators: true,
-  });
-
-  if (!tour) {
-    // eslint-disable-next-line no-new
-    return next(new AppError(`No tour found with the id ${req.params.id}`, 404));
-  }
-
-  resp.status(200).json({
-    status: 'Success',
-    data: {
-      tour,
-    },
-  });
-
-  return null;
-});
-
-exports.createTour = catchAsync(async (req, resp) => {
-  const tour = await Tour.create(req.body);
-
-  resp.status(200).json({
-    status: 'Success',
-    data: {
-      tour,
-    },
-  });
-});
-
-exports.deleteTour = catchAsync(async (req, resp, next) => {
-  const tour = await Tour.findByIdAndDelete(req.params.id);
-  console.log(tour);
-
-  if (!tour) {
-    // eslint-disable-next-line no-new
-    return next(new AppError(`No tour found with the id ${req.params.id}`, 404));
-  }
-
-  resp.status(204).json({
-    status: 'Success',
-    data: null,
-  });
-
-  return null;
-});
+exports.getAllTours = factory.getAll(Tour);
+exports.getTour = factory.getOne(Tour, { path: 'reviews' });
+exports.updateTour = factory.updateOne(Tour);
+exports.createTour = factory.createOne(Tour);
+exports.deleteTour = factory.deleteOne(Tour);
 
 
 exports.getTourStats = catchAsync(async (req, resp) => {
@@ -198,5 +118,31 @@ exports.getMonthlyPlan = catchAsync(async (req, resp) => {
     data: {
       plan,
     },
+  });
+});
+
+exports.getToursWithin = catchAsync(async (req, resp, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latititr and longitude in the format lat, lng.',
+        400,
+      ),
+    );
+  }
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+
+  console.log(distance, lat, lng, unit);
+  resp.status(200).json({
+    status: 'Success',
+    data: tours,
   });
 });

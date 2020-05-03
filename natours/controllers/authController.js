@@ -12,8 +12,7 @@ const signToken = (userId) => jwt.sign(
   { expiresIn: process.env.JWT_EXPIRES_IN },
 );
 
-const createAndSentToken = (params) => {
-  const { user, statusCode, resp } = params;
+const createAndSentToken = (user, statusCode, resp) => {
   // eslint-disable-next-line no-underscore-dangle
   const token = signToken(user._id);
   const cookieOptions = {
@@ -30,6 +29,7 @@ const createAndSentToken = (params) => {
   resp.cookie('jwt', token, cookieOptions);
 
   // to remove password from the response
+  // eslint-disable-next-line no-param-reassign
   user.password = undefined;
 
   resp.status(statusCode).json({

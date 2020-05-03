@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewsRouter = require('./routes/reviewsRoutes');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
@@ -87,6 +88,7 @@ app.use((req, resp, next) => {
 // mounting router on a new route
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewsRouter);
 
 /**
  * Because code executed in order from top to down,

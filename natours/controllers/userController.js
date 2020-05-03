@@ -1,6 +1,7 @@
 const User = require('./../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const factory = require('./handlerFactory');
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -13,17 +14,10 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-exports.getUsers = catchAsync(async (req, resp) => {
-  const users = await User.find();
-
-  resp.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: {
-      users,
-    },
-  });
-});
+exports.getMe = (req, resp, next) => {
+  req.params.id = req.user.id;
+  next();
+};
 
 exports.updateMe = catchAsync(async (req, resp, next) => {
   // 1. Create an error if user post password data
@@ -58,20 +52,7 @@ exports.deleteMe = catchAsync(async (req, resp) => {
 });
 
 
-exports.getUser = (req, resp) => {
-  resp
-    .status(500)
-    .message('Route is not defined');
-};
-
-exports.updateUser = (req, resp) => {
-  resp
-    .status(500)
-    .message('Route is not defined');
-};
-
-exports.deleteUser = (req, resp) => {
-  resp
-    .status(500)
-    .message('Route is not defined');
-};
+exports.getUsers = factory.getAll(User);
+exports.getUser = factory.getOne(User);
+exports.updateUser = factory.updateOne(User);
+exports.deleteUser = factory.deleteOne(User);
