@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
@@ -5,13 +6,24 @@ const hpp = require('hpp');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewsRouter = require('./routes/reviewsRoutes');
+const viewRouter = require('./routes/viewRoutes');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
 const app = express();
+
+// set template engines
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+/**
+ * Serving static files
+ */
+app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * Global middleware
@@ -45,6 +57,7 @@ app.use('/api', limitter);
  * Limit - will not accepted body more than 10kb
  */
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 /**
  * Data sanitization against NoSQL query injections
@@ -72,20 +85,15 @@ app.use(hpp({
 }));
 
 /**
- * Serving static files
- */
-app.use(express.static(`${__dirname}/public`));
-
-/**
  * Test middleware
  */
 app.use((req, resp, next) => {
   req.customTime = new Date().toISOString();
-
   next();
 });
 
 // mounting router on a new route
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewsRouter);
