@@ -17,7 +17,7 @@ const createAndSentToken = (user, statusCode, resp) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(Date.now()
-    + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+      + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
     // cookie can't be modified by the browser (only read and sent back)
     httpOnly: true,
   };
@@ -90,6 +90,19 @@ exports.login = catchAsync(async (req, resp, next) => {
   createAndSentToken(user, 200, resp);
 });
 
+exports.logout = (req, resp) => {
+  const cookieOptions = {
+    expires: new Date(Date.now() + 10 * 1000),
+    // cookie can't be modified by the browser (only read and sent back)
+    httpOnly: true,
+  };
+
+  resp.cookie('jwt', '', cookieOptions);
+
+  resp.status(200).json({
+    status: 'success',
+  });
+}
 
 /**
  * Protect
@@ -145,31 +158,35 @@ exports.protect = catchAsync(async (req, resp, next) => {
   return next();
 });
 
-
-exports.isLoggedIn = catchAsync(async (req, resp, next) => {
+exports.isLoggedIn = async (req, resp, next) => {
   if (req.cookies.jwt) {
-  // Verification token
-    const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+    try {
+      // Verification token
+      const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
 
-    // Check if user is still exists
-    const { id: userId, iat } = decoded;
-    const currentUser = await User.findById(userId);
-    if (!currentUser) {
-      return next();
-    }
-    // Check if user changed password after the token was issued****
-    if (currentUser.changedPasswordAfter(iat)) {
-      return next();
-    }
+      // Check if user is still exists
+      const { id: userId, iat } = decoded;
+      const currentUser = await User.findById(userId);
+      if (!currentUser) {
+        return next();
+      }
+      // Check if user changed password after the token was issued****
+      if (currentUser.changedPasswordAfter(iat)) {
+        return next();
+      }
 
-    // There is a logged in user
-    // all template have an access to locals
-    // eslint-disable-next-line no-param-reassign
-    resp.locals.user = currentUser;
-    return next();
+      // There is a logged in user
+      // all template have an access to locals
+      // eslint-disable-next-line no-param-reassign
+      resp.locals.user = currentUser;
+      return next();
+    } catch (error) {
+      return next()
+    }
   }
+
   return next();
-});
+};
 
 exports.restrictTo = (...roles) => (req, resp, next) => {
   if (!roles.includes(req.user.role)) {

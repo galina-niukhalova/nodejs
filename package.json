@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./natours/server.js",
-    "start-prod": "NODE_ENV=production nodemon server.js",
-    "debug": "ndb server.js",
+    "start-prod": "NODE_ENV=production nodemon ./natours/server.js",
+    "debug": "ndb ./natours/server.js",
     "watch:js": "parcel watch ./natours/public/js/index.js --out-dir ./natours/public/js --out-file bundle.js",
     "build:js": "parcel watch ./natours/public/js/index.js --out-dir ./natours/public/js --out-file bundle.js"
   },
