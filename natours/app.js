@@ -57,6 +57,11 @@ app.use('/api', limitter);
  * Limit - will not accepted body more than 10kb
  */
 app.use(express.json({ limit: '10kb' }));
+// parse forms
+app.use(express.urlencoded({
+  extended: true,
+  limit: '10kb',
+}));
 app.use(cookieParser());
 
 /**

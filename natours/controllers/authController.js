@@ -102,7 +102,7 @@ exports.logout = (req, resp) => {
   resp.status(200).json({
     status: 'success',
   });
-}
+};
 
 /**
  * Protect
@@ -155,6 +155,8 @@ exports.protect = catchAsync(async (req, resp, next) => {
 
   // Grand access to a protected route
   req.user = currentUser;
+  // eslint-disable-next-line no-param-reassign
+  resp.locals.user = currentUser;
   return next();
 });
 
@@ -181,7 +183,7 @@ exports.isLoggedIn = async (req, resp, next) => {
       resp.locals.user = currentUser;
       return next();
     } catch (error) {
-      return next()
+      return next();
     }
   }
 
