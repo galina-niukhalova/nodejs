@@ -1,7 +1,57 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
+
+// const multerStorage = multer.diskStorage({
+//   destination: (req, file, callback) => {
+//     callback(null, 'natours/public/img/users');
+//   },
+//   filename: (req, file, callback) => {
+//     const extension = file.mimetype.split('/')[1];
+//     // eslint-disable-next-line no-underscore-dangle
+//     callback(null, `user-${req.user._id}-${Date.now()}.${extension}`);
+//   },
+// });
+
+const multerStorage = multer.memoryStorage();
+
+// test if file is an image
+const multerFilter = (req, file, callback) => {
+  if (file.mimetype.startsWith('image')) {
+    callback(null, true);
+  } else {
+    callback(new AppError('Not an image! Please upload only images', 400), false);
+  }
+};
+
+// Multer is a node.js middleware for handling multipart/form-data,
+// which is primarily used for uploading files.
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadUserPhoto = upload.single('photo');
+
+exports.resizeUserPhoto = (req, res, next) => {
+  if (!req.file) {
+    return next();
+  }
+
+  // eslint-disable-next-line no-underscore-dangle
+  req.file.filename = `user-${req.user._id}-${Date.now()}.jpeg`;
+
+  sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`natours/public/img/users/${req.file.filename}`);
+
+  next();
+};
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -27,6 +77,9 @@ exports.updateMe = catchAsync(async (req, resp, next) => {
 
   // 2. Update user document
   const filteredBody = filterObj(req.body, 'name', 'email');
+  if (req.file) {
+    filteredBody.photo = req.file.filename;
+  }
   // eslint-disable-next-line no-underscore-dangle
   const updatedUser = await User.findByIdAndUpdate(req.user._id, filteredBody, {
     // will return a new object
