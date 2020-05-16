@@ -1,7 +1,71 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const factory = require('./handlerFactory');
-const Tour = require('./../models/tourModel');
+const Tour = require('../models/tourModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+
+const multerStorage = multer.memoryStorage();
+
+// test if file is an image
+const multerFilter = (req, file, callback) => {
+  if (file.mimetype.startsWith('image')) {
+    callback(null, true);
+  } else {
+    callback(new AppError('Not an image! Please upload only images', 400), false);
+  }
+};
+
+// Multer is a node.js middleware for handling multipart/form-data,
+// which is primarily used for uploading files.
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadTourImages = upload.fields([
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 },
+]);
+
+exports.resizeTourImages = catchAsync(async (req, resp, next) => {
+  const { images, imageCover } = req.files;
+
+  if (!imageCover || !images) {
+    next();
+  }
+
+  // Image cover
+  req.body.imageCover = `tour-${req.params.id}-${Date.now}-cover.jpeg`;
+  await sharp(imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`natours/public/img/tours/${req.body.imageCover}`);
+
+  // Images
+  req.body.images = [];
+  await Promise.all(
+    images.map(async (image, index) => {
+      console.log(image);
+      const fileName = `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`;
+
+      await sharp(image.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`natours/public/img/tours/${fileName}`);
+
+      req.body.images.push(fileName);
+    }),
+  );
+
+  // console.log(req.body.images);
+  next();
+});
+
+// when upload multiple images with the same name
+// upload.array('images', 3) -> 3 is maxCount
 
 exports.aliasTopTours = (req, resp, next) => {
   req.query.limit = 5;
