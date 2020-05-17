@@ -71,12 +71,14 @@ if(updatePasswordForm) {
 }
 
 const bookTourBtn = document.getElementById('book-tour')
-bookTourBtn.addEventListener('click', (e) => {
-  console.log('hello')
-  e.target.textContent = 'Processing...';
+if(bookTourBtn) {
+  bookTourBtn.addEventListener('click', (e) => {
+    console.log('hello')
+    e.target.textContent = 'Processing...';
 
-  const { tourId } = e.target.dataset;
-  bookTour(tourId)
-})
+    const { tourId } = e.target.dataset;
+    bookTour(tourId)
+  })
+}
 
 
