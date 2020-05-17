@@ -3,6 +3,7 @@ import '@babel/polyfill'
 import { login, logout } from './login';
 import { updateSettings } from './updateSettings'
 import { displayMap } from './mapbox';
+import { bookTour } from './stripe'
 
 const mapBox = document.getElementById('map');
 if (mapBox) {
@@ -69,5 +70,13 @@ if(updatePasswordForm) {
   })
 }
 
+const bookTourBtn = document.getElementById('book-tour')
+bookTourBtn.addEventListener('click', (e) => {
+  console.log('hello')
+  e.target.textContent = 'Processing...';
+
+  const { tourId } = e.target.dataset;
+  bookTour(tourId)
+})
 
 
