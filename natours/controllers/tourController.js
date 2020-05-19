@@ -47,7 +47,6 @@ exports.resizeTourImages = catchAsync(async (req, resp, next) => {
   req.body.images = [];
   await Promise.all(
     images.map(async (image, index) => {
-      console.log(image);
       const fileName = `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`;
 
       await sharp(image.buffer)
@@ -204,7 +203,6 @@ exports.getToursWithin = catchAsync(async (req, resp, next) => {
     startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
   });
 
-  console.log(distance, lat, lng, unit);
   resp.status(200).json({
     status: 'Success',
     data: tours,

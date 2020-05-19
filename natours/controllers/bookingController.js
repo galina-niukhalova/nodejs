@@ -2,6 +2,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Tour = require('../models/tourModel');
 const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
+const factory = require('./handlerFactory');
 
 exports.getCheckoutSession = catchAsync(async (req, resp) => {
   // 1. Get the current booked tour
@@ -35,7 +36,7 @@ exports.getCheckoutSession = catchAsync(async (req, resp) => {
 
 
 exports.createBookingCheckout = catchAsync(async (req, resp, next) => {
-  // This is only temporary, because it's unsecure
+  // This is only temporary, because it's not secure
   const { tour, user, price } = req.query;
 
   if (!tour && !user && !price) {
@@ -47,4 +48,11 @@ exports.createBookingCheckout = catchAsync(async (req, resp, next) => {
   });
 
   resp.redirect(req.originalUrl.split('?')[0]);
+  return next();
 });
+
+exports.getAllBookings = factory.getAll(Booking);
+exports.createBooking = factory.createOne(Booking);
+exports.getBooking = factory.getOne(Booking, { path: 'user' });
+exports.updateBooking = factory.updateOne(Booking);
+exports.deleteBooking = factory.deleteOne(Booking);

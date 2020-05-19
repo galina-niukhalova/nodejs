@@ -2,6 +2,7 @@ const Tour = require('../models/tourModel');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const Booking = require('../models/bookingModel');
 
 // eslint-disable-next-line no-unused-vars
 exports.getOverview = catchAsync(async (req, resp, next) => {
@@ -42,6 +43,7 @@ exports.getAccount = (req, resp) => {
 };
 
 exports.updateUserData = catchAsync(async (req, resp) => {
+  // eslint-disable-next-line no-underscore-dangle
   const updatedUser = await User.findByIdAndUpdate(req.user._id, {
     name: req.body.name,
     email: req.body.email,
@@ -53,5 +55,21 @@ exports.updateUserData = catchAsync(async (req, resp) => {
   resp.status(200).render('account', {
     title: 'Your account',
     user: updatedUser,
+  });
+});
+
+exports.getMyTours = catchAsync(async (req, resp) => {
+  // 1. Find all bookings
+  const bookings = await Booking.find({
+    user: req.user.id,
+  });
+
+  // 2. Find tours with the returned Ids
+  const tourIds = bookings.map((el) => el.tour.id);
+  const tours = await Tour.find({ _id: { $in: tourIds } });
+
+  resp.status(200).render('overview', {
+    title: 'My tours',
+    tours,
   });
 });
