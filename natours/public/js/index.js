@@ -73,7 +73,6 @@ if(updatePasswordForm) {
 const bookTourBtn = document.getElementById('book-tour')
 if(bookTourBtn) {
   bookTourBtn.addEventListener('click', (e) => {
-    console.log('hello')
     e.target.textContent = 'Processing...';
 
     const { tourId } = e.target.dataset;

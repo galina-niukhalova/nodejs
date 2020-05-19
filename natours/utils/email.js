@@ -37,7 +37,6 @@ module.exports = class Email {
     // Send the actual email
 
     // 1. Render HTML base on pug template
-    console.log(`${__dirname}/../views/emails/${template}`);
     const html = pug.renderFile(`${__dirname}/../views/emails/${template}.pug`, {
       firstName: this.firstName,
       url: this.url,

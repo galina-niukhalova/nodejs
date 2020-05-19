@@ -9013,7 +9013,6 @@ var bookTourBtn = document.getElementById('book-tour');
 
 if (bookTourBtn) {
   bookTourBtn.addEventListener('click', function (e) {
-    console.log('hello');
     e.target.textContent = 'Processing...';
     var tourId = e.target.dataset.tourId;
     (0, _stripe.bookTour)(tourId);

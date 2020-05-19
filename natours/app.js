@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const compression = require('comprassion');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewsRouter = require('./routes/reviewsRoutes');
@@ -89,6 +90,8 @@ app.use(hpp({
     'price',
   ],
 }));
+
+app.use(compression());
 
 /**
  * Test middleware
