@@ -1,6 +1,10 @@
-# nodejs
-NodeJS Udemy course
+# NodeJS Udemy course
+[Course](https://www.udemy.com/course/nodejs-express-mongodb-bootcamp)
 
+## Natours website
+https://natours-galina.herokuapp.com/
+
+## Services used in the course
 
 [Atlas](https://cloud.mongodb.com/v2/5e4a59429ccf64376f2d6b79#clusters)
 
@@ -10,4 +14,6 @@ NodeJS Udemy course
 
 [Mailsac](https://mailsac.com) - quick email without auth
 
-[Course](https://www.udemy.com/course/nodejs-express-mongodb-bootcamp)
+[Heroku](https://dashboard.heroku.com/apps/natours-galina)
+
+
