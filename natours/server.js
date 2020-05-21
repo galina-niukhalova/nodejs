@@ -53,3 +53,11 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+// we need this listening, because heroku shut down all our processes every 24 hours.
+process.on('SIGTERM', () => {
+  console.log('✋ SIGTERM RECEIVED. Shutting down gracefully');
+  server.close(() => {
+    console.log('💥 Process terminated!');
+  });
+});
