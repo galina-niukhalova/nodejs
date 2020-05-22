@@ -13,7 +13,7 @@ exports.getCheckoutSession = catchAsync(async (req, resp) => {
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     // success_url: `${req.protocol}://${req.get('host')}/?tour=${req.params.tourId}&user=${req.user.id}&price=${tour.price}`,
-    success_url: `${req.protocol}://${req.get('host')}`,
+    success_url: `${req.protocol}://${req.get('host')}/my-tours`,
     cancel_url: `${req.protocol}://${req.get('host')}/tour/${tour.slug}`,
     customer_email: req.user.email,
     client_reference_id: req.params.tourId,
@@ -21,7 +21,7 @@ exports.getCheckoutSession = catchAsync(async (req, resp) => {
       {
         name: `${tour.name} Tour`,
         description: tour.summary,
-        images: [`https://www.natours.dev/img/tours/${tour.imageCover}`],
+        images: [`${req.protocol}://${req.get('host')}/img/tours/${tour.imageCover}`],
         amount: tour.price * 100, // in cents
         currency: 'USD',
         quantity: 1,
@@ -54,11 +54,10 @@ exports.getCheckoutSession = catchAsync(async (req, resp) => {
 // });
 
 const createBookingCheckout = catchAsync(async (session) => {
-  const { client_reference_id: tour, customer_email: email, line_items } = session;
-  const price = line_items[0].amount / 100;
+  const { client_reference_id: tour, customer_email: email, display_items: displayItems } = session;
+  const price = displayItems[0].amount / 100;
 
   const user = (await User.findOne({ email })).id;
-
   await Booking.create({
     tour, user, price,
   });
@@ -77,7 +76,7 @@ exports.webhookCheckout = (req, resp, next) => {
     return resp.status(400).send(`Webhook error: ${error.message}`);
   }
 
-  if (event.type === 'checkout.session.complete') {
+  if (event.type === 'checkout.session.completed') {
     createBookingCheckout(event.data.object);
   }
 
