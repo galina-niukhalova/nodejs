@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
+const cors = require('cors');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewsRouter = require('./routes/reviewsRoutes');
@@ -32,6 +33,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Global middleware
  */
+// Implement CORS
+// Access-Control-Allow-Origin *
+app.use(cors());
+
+// api.natours.com; front-end: natours.com
+// app.use(cors({
+//   origin: 'https://www.natours.com',
+// }));
+
+app.options('*', cors());
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
@@ -106,6 +118,8 @@ app.use((req, resp, next) => {
 // mounting router on a new route
 app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
+// if we want to allow CORS for only one route
+// app.use('/api/v1/tours', cors(), tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewsRouter);
 app.use('/api/v1/booking', bookingRouter);
