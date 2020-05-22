@@ -14,6 +14,7 @@ const userRouter = require('./routes/userRoutes');
 const reviewsRouter = require('./routes/reviewsRoutes');
 const viewRouter = require('./routes/viewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
+const bookingController = require('./controllers/bookingController');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
@@ -67,6 +68,11 @@ app.use(helmet());
  * Limit requests from the same API
  */
 app.use('/api', limitter);
+
+// we call it here, because the body should be row, not in json format
+app.post('/webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  bookingController.webhookCheckout);
 
 /**
  * Body parser, reading data from the body into req.body
