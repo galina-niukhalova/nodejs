@@ -17,3 +17,4 @@ https://natours-galina.herokuapp.com/
 [Heroku](https://dashboard.heroku.com/apps/natours-galina)
 
 
+![Certificate](https://github.com/galina-niukhalova/nodejs/blob/master/Udemy%20Certificate.jpg)
