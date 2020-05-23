@@ -14,6 +14,8 @@ https://natours-galina.herokuapp.com/
 
 [Mailsac](https://mailsac.com) - quick email without auth
 
+[Stripe](https://stripe.com/)
+
 [Heroku](https://dashboard.heroku.com/apps/natours-galina)
 
 
